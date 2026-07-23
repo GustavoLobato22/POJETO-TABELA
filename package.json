@@ -1,0 +1,9 @@
+{
+  "name": "financas-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aplicativo de controle financeiro pessoal — PWA estática, sem build step.",
+  "scripts": {
+    "start": "npx http-server -p 8080 -c-1"
+  }
+}
