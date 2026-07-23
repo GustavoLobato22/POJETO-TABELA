@@ -1,5 +1,5 @@
 // Minimal dependency-free grouped/simple bar chart (SVG string output).
-export function renderBarChart(series, { width = 320, height = 160, colorA = '#16A34A', colorB = '#DC2626', grouped = false } = {}) {
+export function renderBarChart(series, { width = 320, height = 160, colorA = '#1C3F72', colorB = '#DC2626', grouped = false } = {}) {
   const padX = 6;
   const padY = 16;
   const gap = 10;
@@ -14,8 +14,8 @@ export function renderBarChart(series, { width = 320, height = 160, colorA = '#1
       const barW = (groupWidth - 4) / 2;
       const ha = (s.a / maxVal) * (height - padY * 2);
       const hb = (s.b / maxVal) * (height - padY * 2);
-      bars += `<rect x="${gx}" y="${height - padY - ha}" width="${barW}" height="${ha}" rx="4" fill="${colorA}"/>`;
-      bars += `<rect x="${gx + barW + 4}" y="${height - padY - hb}" width="${barW}" height="${hb}" rx="4" fill="${colorB}"/>`;
+      bars += `<rect x="${gx}" y="${height - padY - ha}" width="${barW}" height="${Math.max(ha, 1)}" rx="4" fill="${colorA}"/>`;
+      bars += `<rect x="${gx + barW + 4}" y="${height - padY - hb}" width="${barW}" height="${Math.max(hb, 1)}" rx="4" fill="${colorB}"/>`;
     } else {
       const h = (s.value / maxVal) * (height - padY * 2);
       bars += `<rect x="${gx}" y="${height - padY - h}" width="${groupWidth}" height="${Math.max(h, 3)}" rx="6" fill="${s.color || colorA}"/>`;

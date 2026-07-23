@@ -1,5 +1,5 @@
 // Minimal dependency-free line/area chart renderer (SVG string output).
-export function renderLineChart(series, { width = 320, height = 140, color = '#16A34A', fillId = 'lineFill' } = {}) {
+export function renderLineChart(series, { width = 320, height = 140, color = '#1C3F72', fillId = 'lineFill' } = {}) {
   const padX = 8;
   const padY = 16;
   const values = series.map((p) => p.value);

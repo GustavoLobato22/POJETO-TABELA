@@ -1,33 +1,67 @@
 import { uid } from '../utils/id.js';
 import { toDateKey } from '../utils/format.js';
-import { buildSeed } from '../data/seed.js';
+import { getQuestion } from '../data/questions.js';
+import { sm2Schedule, advanceQuestionReview, initialQuestionReviewStage } from '../engine/srs.js';
+import { XP_REWARDS, updateStreak, checkNewlyUnlockedBadges } from '../engine/gamification.js';
+import { aggregateStats } from '../engine/statsEngine.js';
 
-const STORAGE_KEY = 'financas.v1';
+const STORAGE_KEY = 'pmes-estudos.v1';
+
+function defaultState() {
+  return {
+    profile: {
+      name: '',
+      examDate: null,
+      dailyHours: 2,
+      onboarded: false,
+    },
+    settings: {
+      theme: 'system',
+      aiApiKey: null,
+      aiProvider: 'anthropic',
+    },
+    attempts: [],
+    simulados: [],
+    flashcardState: {},
+    reviewQueue: {},
+    favorites: [],
+    notes: {},
+    gamification: {
+      xp: 0,
+      streakCurrent: 0,
+      streakBest: 0,
+      lastStudyDate: null,
+      unlockedBadges: [],
+      totalFlashcardReviews: 0,
+    },
+    focusSessions: [],
+    redacaoDraft: '',
+  };
+}
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const base = defaultState();
+      return {
+        ...base,
+        ...parsed,
+        profile: { ...base.profile, ...(parsed.profile || {}) },
+        settings: { ...base.settings, ...(parsed.settings || {}) },
+        gamification: { ...base.gamification, ...(parsed.gamification || {}) },
+      };
+    }
   } catch (e) {
     console.warn('Falha ao carregar dados salvos', e);
   }
-  return buildSeed();
-}
-
-function defaultSettings() {
-  return {
-    theme: 'system', // 'system' | 'light' | 'dark'
-    pinEnabled: false,
-    biometricEnabled: false,
-    pin: null,
-    userName: 'Você',
-  };
+  return defaultState();
 }
 
 class Store {
   constructor() {
     this.state = loadState();
-    this.state.settings = { ...defaultSettings(), ...(this.state.settings || {}) };
     this.listeners = new Set();
     this._saveScheduled = false;
   }
@@ -55,164 +89,140 @@ class Store {
     });
   }
 
-  // ---------------- Transactions ----------------
-  addTransaction(data) {
-    const tx = {
-      id: uid(),
-      type: data.type, // 'income' | 'expense'
-      amount: Math.abs(Number(data.amount) || 0),
-      description: data.description || '',
-      category: data.category,
-      date: data.date || toDateKey(new Date()),
-      paymentMethod: data.paymentMethod,
-      note: data.note || '',
-      cardId: data.cardId || null,
-      favorite: false,
-      createdAt: Date.now(),
-    };
-    this.state.transactions.unshift(tx);
-    this.notify();
-    return tx;
+  _addXp(amount) {
+    this.state.gamification.xp = Math.max(0, (this.state.gamification.xp || 0) + amount);
   }
 
-  updateTransaction(id, patch) {
-    const tx = this.state.transactions.find((t) => t.id === id);
-    if (!tx) return;
-    Object.assign(tx, patch);
-    this.notify();
+  _bumpStreak() {
+    this.state.gamification = updateStreak(this.state.gamification);
   }
 
-  deleteTransaction(id) {
-    this.state.transactions = this.state.transactions.filter((t) => t.id !== id);
+  _checkBadges() {
+    const stats = aggregateStats(this.state);
+    const { newlyUnlocked } = checkNewlyUnlockedBadges(stats, this.state.gamification.unlockedBadges);
+    if (newlyUnlocked.length) {
+      this.state.gamification.unlockedBadges = [
+        ...this.state.gamification.unlockedBadges,
+        ...newlyUnlocked.map((b) => b.id),
+      ];
+    }
+    return newlyUnlocked;
+  }
+
+  // ---------------- Onboarding / profile ----------------
+  completeOnboarding({ name, examDate, dailyHours }) {
+    this.state.profile = { name, examDate, dailyHours, onboarded: true };
     this.notify();
   }
 
-  duplicateTransaction(id) {
-    const tx = this.state.transactions.find((t) => t.id === id);
-    if (!tx) return;
-    const copy = { ...tx, id: uid(), date: toDateKey(new Date()), createdAt: Date.now() };
-    this.state.transactions.unshift(copy);
-    this.notify();
-    return copy;
-  }
-
-  toggleFavorite(id) {
-    const tx = this.state.transactions.find((t) => t.id === id);
-    if (!tx) return;
-    tx.favorite = !tx.favorite;
+  updateProfile(patch) {
+    Object.assign(this.state.profile, patch);
     this.notify();
   }
 
-  // ---------------- Goals ----------------
-  addGoal(data) {
-    const goal = {
-      id: uid(),
-      title: data.title,
-      targetAmount: Number(data.targetAmount) || 0,
-      savedAmount: Number(data.savedAmount) || 0,
-      icon: data.icon || 'target',
-      color: data.color || '#16A34A',
-      createdAt: Date.now(),
-      deadline: data.deadline || null,
-    };
-    this.state.goals.unshift(goal);
-    this.notify();
-    return goal;
-  }
-
-  updateGoal(id, patch) {
-    const goal = this.state.goals.find((g) => g.id === id);
-    if (!goal) return;
-    Object.assign(goal, patch);
-    this.notify();
-  }
-
-  contributeToGoal(id, amount) {
-    const goal = this.state.goals.find((g) => g.id === id);
-    if (!goal) return;
-    goal.savedAmount = Math.max(0, goal.savedAmount + Number(amount));
-    this.notify();
-  }
-
-  deleteGoal(id) {
-    this.state.goals = this.state.goals.filter((g) => g.id !== id);
-    this.notify();
-  }
-
-  // ---------------- Fixed bills ----------------
-  addFixedBill(data) {
-    const bill = {
-      id: uid(),
-      title: data.title,
-      amount: Number(data.amount) || 0,
-      category: data.category || 'moradia',
-      dueDay: Number(data.dueDay) || 5,
-      active: true,
-      createdAt: Date.now(),
-    };
-    this.state.fixedBills.unshift(bill);
-    this.notify();
-    return bill;
-  }
-
-  updateFixedBill(id, patch) {
-    const bill = this.state.fixedBills.find((b) => b.id === id);
-    if (!bill) return;
-    Object.assign(bill, patch);
-    this.notify();
-  }
-
-  deleteFixedBill(id) {
-    this.state.fixedBills = this.state.fixedBills.filter((b) => b.id !== id);
-    this.notify();
-  }
-
-  // ---------------- Cards ----------------
-  addCard(data) {
-    const card = {
-      id: uid(),
-      name: data.name,
-      last4: data.last4 || '0000',
-      limit: Number(data.limit) || 0,
-      used: Number(data.used) || 0,
-      closingDay: Number(data.closingDay) || 1,
-      dueDay: Number(data.dueDay) || 10,
-      color: data.color || '#12141A',
-      createdAt: Date.now(),
-    };
-    this.state.cards.unshift(card);
-    this.notify();
-    return card;
-  }
-
-  updateCard(id, patch) {
-    const card = this.state.cards.find((c) => c.id === id);
-    if (!card) return;
-    Object.assign(card, patch);
-    this.notify();
-  }
-
-  deleteCard(id) {
-    this.state.cards = this.state.cards.filter((c) => c.id !== id);
-    this.notify();
-  }
-
-  // ---------------- Settings ----------------
   updateSettings(patch) {
     Object.assign(this.state.settings, patch);
     this.notify();
   }
 
-  // ---------------- Danger zone ----------------
-  resetAll() {
-    this.state = buildSeed();
-    this.state.settings = defaultSettings();
+  // ---------------- Question attempts ----------------
+  recordAttempt({ questionId, chosenKey, timeSeconds = 0 }) {
+    const question = getQuestion(questionId);
+    if (!question) return null;
+    const correct = chosenKey === question.correct;
+
+    const attempt = {
+      id: uid(),
+      questionId,
+      subject: question.subject,
+      topic: question.topic,
+      correct,
+      chosenKey,
+      timeSeconds,
+      date: toDateKey(new Date()),
+      timestamp: Date.now(),
+    };
+    this.state.attempts.push(attempt);
+    this._addXp(correct ? XP_REWARDS.correctAnswer : XP_REWARDS.wrongAnswer);
+    this._bumpStreak();
+
+    const wasInQueue = Boolean(this.state.reviewQueue[questionId]);
+    if (!correct) {
+      this.state.reviewQueue[questionId] = { ...initialQuestionReviewStage(), subject: question.subject, topic: question.topic };
+    } else if (wasInQueue) {
+      const advanced = advanceQuestionReview(this.state.reviewQueue[questionId].stage, true);
+      if (advanced.mastered) delete this.state.reviewQueue[questionId];
+      else this.state.reviewQueue[questionId] = { ...advanced, subject: question.subject, topic: question.topic };
+    }
+
+    const newlyUnlocked = this._checkBadges();
+    this.notify();
+    return { correct, newlyUnlocked };
+  }
+
+  // ---------------- Flashcards (SM-2) ----------------
+  reviewFlashcard(cardId, quality) {
+    const prev = this.state.flashcardState[cardId];
+    const next = sm2Schedule(prev, quality);
+    this.state.flashcardState[cardId] = next;
+    this.state.gamification.totalFlashcardReviews = (this.state.gamification.totalFlashcardReviews || 0) + 1;
+    this._addXp(XP_REWARDS.flashcardReview);
+    this._bumpStreak();
+    const newlyUnlocked = this._checkBadges();
+    this.notify();
+    return { newlyUnlocked };
+  }
+
+  // ---------------- Simulados ----------------
+  saveSimulado(result) {
+    const record = { id: uid(), createdAt: Date.now(), ...result };
+    this.state.simulados.unshift(record);
+    const bonus = Math.round((result.scorePct / 100) * 50);
+    this._addXp(XP_REWARDS.simuladoBase + bonus);
+    this._bumpStreak();
+    const newlyUnlocked = this._checkBadges();
+    this.notify();
+    return { record, newlyUnlocked };
+  }
+
+  // ---------------- Focus mode ----------------
+  completeFocusSession(seconds) {
+    this.state.focusSessions.push({ date: toDateKey(new Date()), seconds, timestamp: Date.now() });
+    this._addXp(Math.round((seconds / (25 * 60)) * XP_REWARDS.focusSession25min));
+    this._bumpStreak();
+    const newlyUnlocked = this._checkBadges();
+    this.notify();
+    return { newlyUnlocked };
+  }
+
+  // ---------------- Favorites & notes ----------------
+  toggleFavorite(questionId) {
+    const idx = this.state.favorites.indexOf(questionId);
+    if (idx >= 0) this.state.favorites.splice(idx, 1);
+    else this.state.favorites.push(questionId);
     this.notify();
   }
 
-  wipeAll() {
-    this.state = { transactions: [], goals: [], fixedBills: [], cards: [], settings: defaultSettings() };
+  setNote(questionId, text) {
+    if (text && text.trim()) this.state.notes[questionId] = text;
+    else delete this.state.notes[questionId];
     this.notify();
+  }
+
+  // ---------------- Redação ----------------
+  saveRedacaoDraft(text) {
+    this.state.redacaoDraft = text;
+    this.notify();
+  }
+
+  // ---------------- Danger zone ----------------
+  resetAll() {
+    this.state = defaultState();
+    this.notify();
+  }
+
+  exportData() {
+    return JSON.stringify(this.state, null, 2);
   }
 }
 
