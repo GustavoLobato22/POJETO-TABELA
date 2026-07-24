@@ -56,6 +56,15 @@ parceria com um curso preparatório, banco próprio de questões autorais em
 maior escala, ou provas em domínio público), ela pode ser adicionada em
 `src/js/data/questions.js` seguindo o mesmo formato.
 
+Por esse mesmo motivo, a tela **Perfil → Provas anteriores** (dados em
+`src/js/data/pastExams.js`) também não reproduz nenhuma questão real: ela
+lista apenas metadados (ano, cargo, banca quando confirmada, número de
+vagas) e um link público para a fonte de cada concurso já realizado — a
+maioria apontando diretamente para `pm.es.gov.br`. Quando não localizamos
+o PDF oficial de um ano específico, o link aponta para um agregador
+público e isso fica marcado explicitamente na tela, junto com qualquer
+dado (como a banca) que não foi possível confirmar.
+
 ## O que está implementado
 
 - **Banco de questões** com explicação completa por questão: por que a
@@ -81,6 +90,9 @@ maior escala, ou provas em domínio público), ela pode ser adicionada em
   via Web Audio API (sem dependência de arquivos de áudio externos).
 - **Redação**: guia de estrutura, dicas e um editor de rascunho com
   contagem aproximada de linhas.
+- **Provas anteriores**: referências (ano, cargo, banca, link oficial) dos
+  concursos de Soldado da PMES já realizados que conseguimos identificar
+  por pesquisa pública — sem reproduzir questões reais (ver nota legal).
 - Modo claro/escuro, PWA instalável, totalmente responsivo.
 
 ## Limitações conhecidas / próximos passos

@@ -9,6 +9,7 @@ import { openFocusMode } from './focusMode.js';
 import { openRedacao } from './redacao.js';
 import { openSettings } from './settings.js';
 import { openEditalInfo } from './editalInfo.js';
+import { openPastExams } from './pastExams.js';
 
 const MENU = [
   { id: 'plan', label: 'Plano de estudos', icon: 'calendar', open: openStudyPlan },
@@ -17,6 +18,7 @@ const MENU = [
   { id: 'focus', label: 'Modo foco (Pomodoro)', icon: 'timer', open: openFocusMode },
   { id: 'redacao', label: 'Redação', icon: 'edit', open: openRedacao },
   { id: 'edital', label: 'Sobre o concurso (edital)', icon: 'shield', open: openEditalInfo },
+  { id: 'past-exams', label: 'Provas anteriores (referências)', icon: 'scroll', open: openPastExams },
   { id: 'settings', label: 'Configurações', icon: 'settings', open: openSettings },
 ];
 
