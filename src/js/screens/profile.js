@@ -9,6 +9,7 @@ import { openSheet } from '../ui/sheet.js';
 import { showToast } from '../ui/toast.js';
 import { totalBalance } from '../store/selectors.js';
 import { formatCurrency } from '../utils/format.js';
+import { clearSession, renameAccount } from '../auth/accounts.js';
 
 function initials(name) {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || 'V';
@@ -99,6 +100,16 @@ export function renderProfile(root) {
       </div>
     </div>
 
+    <div class="section">
+      <div class="card" style="display:flex;flex-direction:column;gap:2px">
+        <button class="menu-row" id="logout-btn" style="width:100%;text-align:left">
+          <span class="menu-row__icon">${icon('close', { size: 17 })}</span>
+          <span class="menu-row__label text-negative">Sair</span>
+        </button>
+      </div>
+      <p class="text-caption text-tertiary" style="margin-top:10px;text-align:center;line-height:1.6">Seus dados continuam salvos neste dispositivo. Outra pessoa pode entrar com a própria conta.</p>
+    </div>
+
     <div style="text-align:center;margin-top:32px">
       <div class="text-caption text-tertiary">Finanças · v1.0</div>
     </div>
@@ -117,6 +128,13 @@ export function renderProfile(root) {
     store.updateSettings({ theme: 'system' });
   });
 
+  root.querySelector('#logout-btn').addEventListener('click', () => {
+    if (confirm('Sair da sua conta? Seus dados ficam salvos e você pode entrar novamente a qualquer momento.')) {
+      clearSession();
+      location.reload();
+    }
+  });
+
   root.querySelector('#edit-name').addEventListener('click', () => {
     openSheet({
       title: 'Seu nome',
@@ -127,7 +145,10 @@ export function renderProfile(root) {
         `;
         body.querySelector('#save-name').addEventListener('click', () => {
           const val = body.querySelector('#name-input').value.trim();
-          if (val) store.updateSettings({ userName: val });
+          if (val) {
+            store.updateSettings({ userName: val });
+            if (store.userId) renameAccount(store.userId, val);
+          }
           close();
           showToast('Nome atualizado');
         });

@@ -1,18 +1,6 @@
 import { uid } from '../utils/id.js';
 import { toDateKey } from '../utils/format.js';
-import { buildSeed } from '../data/seed.js';
-
-const STORAGE_KEY = 'financas.v1';
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {
-    console.warn('Falha ao carregar dados salvos', e);
-  }
-  return buildSeed();
-}
+import { buildEmptyState } from '../data/emptyState.js';
 
 function defaultSettings() {
   return {
@@ -26,10 +14,33 @@ function defaultSettings() {
 
 class Store {
   constructor() {
-    this.state = loadState();
-    this.state.settings = { ...defaultSettings(), ...(this.state.settings || {}) };
+    // No one is logged in yet — loadForUser() populates real data once an
+    // account is chosen. Keeping an empty shell here (rather than null)
+    // means every screen can render safely before that happens.
+    this.userId = null;
+    this.storageKey = null;
+    this.state = buildEmptyState();
     this.listeners = new Set();
     this._saveScheduled = false;
+  }
+
+  loadForUser(userId, displayName) {
+    this.userId = userId;
+    this.storageKey = 'financas.v1.' + userId;
+    let state = null;
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      if (raw) state = JSON.parse(raw);
+    } catch (e) {
+      console.warn('Falha ao carregar dados salvos', e);
+    }
+    if (!state) {
+      state = buildEmptyState();
+      if (displayName) state.settings.userName = displayName;
+    }
+    state.settings = { ...defaultSettings(), ...(state.settings || {}) };
+    this.state = state;
+    this.notify();
   }
 
   subscribe(fn) {
@@ -43,12 +54,13 @@ class Store {
   }
 
   persist() {
+    if (!this.storageKey) return;
     if (this._saveScheduled) return;
     this._saveScheduled = true;
     queueMicrotask(() => {
       this._saveScheduled = false;
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+        localStorage.setItem(this.storageKey, JSON.stringify(this.state));
       } catch (e) {
         console.warn('Falha ao salvar dados', e);
       }
@@ -204,14 +216,10 @@ class Store {
   }
 
   // ---------------- Danger zone ----------------
-  resetAll() {
-    this.state = buildSeed();
-    this.state.settings = defaultSettings();
-    this.notify();
-  }
-
   wipeAll() {
-    this.state = { transactions: [], goals: [], fixedBills: [], cards: [], settings: defaultSettings() };
+    const name = this.state.settings.userName;
+    this.state = buildEmptyState();
+    this.state.settings.userName = name;
     this.notify();
   }
 }

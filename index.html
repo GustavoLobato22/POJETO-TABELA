@@ -21,7 +21,8 @@
   <script>
     // Apply persisted theme before first paint to avoid a flash of the wrong theme.
     try {
-      var raw = localStorage.getItem('financas.v1');
+      var session = localStorage.getItem('financas.session');
+      var raw = session ? localStorage.getItem('financas.v1.' + session) : null;
       var theme = raw ? (JSON.parse(raw).settings || {}).theme : null;
       if (theme === 'dark' || theme === 'light') {
         document.documentElement.setAttribute('data-theme', theme);
