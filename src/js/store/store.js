@@ -4,8 +4,14 @@ import { getQuestion } from '../data/questions.js';
 import { sm2Schedule, advanceQuestionReview, initialQuestionReviewStage } from '../engine/srs.js';
 import { XP_REWARDS, updateStreak, checkNewlyUnlockedBadges } from '../engine/gamification.js';
 import { aggregateStats } from '../engine/statsEngine.js';
+import { dataKeyFor, getActiveProfileId } from './profiles.js';
 
-const STORAGE_KEY = 'pmes-estudos.v1';
+// Cada perfil local (ver profiles.js) grava seus dados sob uma chave própria,
+// para que o progresso de estudo de uma pessoa nunca se misture com o de
+// outra no mesmo aparelho. Sem um perfil ativo, a store fica com uma chave
+// provisória — nesse caso o app já está mostrando a tela de login/seleção
+// de perfil, então esse estado nunca chega a ser exibido.
+const STORAGE_KEY = dataKeyFor(getActiveProfileId() || '__no_profile__');
 
 function defaultState() {
   return {

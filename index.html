@@ -20,11 +20,17 @@
   <link rel="stylesheet" href="src/styles/components.css" />
   <script>
     // Apply persisted theme before first paint to avoid a flash of the wrong theme.
+    // Data is namespaced per local profile (see src/js/store/profiles.js), so
+    // first resolve the active profile, then read that profile's own theme.
     try {
-      var raw = localStorage.getItem('pmes-estudos.v1');
-      var theme = raw ? (JSON.parse(raw).settings || {}).theme : null;
-      if (theme === 'dark' || theme === 'light') {
-        document.documentElement.setAttribute('data-theme', theme);
+      var registryRaw = localStorage.getItem('pmes-estudos.profiles.v1');
+      var activeId = registryRaw ? JSON.parse(registryRaw).activeProfileId : null;
+      if (activeId) {
+        var raw = localStorage.getItem('pmes-estudos.v1:' + activeId);
+        var theme = raw ? (JSON.parse(raw).settings || {}).theme : null;
+        if (theme === 'dark' || theme === 'light') {
+          document.documentElement.setAttribute('data-theme', theme);
+        }
       }
     } catch (e) {}
   </script>

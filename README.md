@@ -10,6 +10,30 @@ questão.
 celular e no desktop, com todos os dados salvos localmente no dispositivo
 (`localStorage`) — funciona offline depois do primeiro carregamento.
 
+## Perfis locais (login)
+
+Ao abrir o app pela primeira vez, é preciso escolher ou criar um **perfil
+local** — nome e, opcionalmente, um PIN de 4 dígitos (ver
+`src/js/store/profiles.js`). Cada perfil tem seus dados completamente
+isolados (questões respondidas, notas, flashcards, simulados, plano de
+estudos, XP, rascunho de redação — tudo) guardados sob sua própria chave no
+`localStorage`, então várias pessoas podem estudar no mesmo
+celular/computador sem misturar progresso. É possível trocar de perfil a
+qualquer momento em Perfil → Configurações → Trocar de perfil.
+
+**Importante sobre segurança:** isso não é autenticação de verdade. Não há
+servidor, não há conta que sincronize entre aparelhos diferentes, e o PIN é
+só uma trava de conveniência local — qualquer pessoa com acesso ao mesmo
+navegador e ao DevTools consegue contorná-lo. Para login real
+multi-dispositivo (entrar com a mesma conta no celular e no computador),
+seria necessário um backend com banco de dados próprio (ex.: Supabase),
+o que é uma mudança de arquitetura maior — avise se quiser seguir por esse
+caminho.
+
+Instalações anteriores a esse recurso (dados salvos direto sob a chave
+antiga `pmes-estudos.v1`, sem perfil) são migradas automaticamente para um
+primeiro perfil no primeiro carregamento, sem perda de progresso.
+
 ## Rodando localmente
 
 ```bash

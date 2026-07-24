@@ -4,6 +4,7 @@ import { openPage } from '../ui/page.js';
 import { openSheet } from '../ui/sheet.js';
 import { showToast } from '../ui/toast.js';
 import { toDateKey } from '../utils/format.js';
+import { clearActiveProfile } from '../store/profiles.js';
 
 const THEME_OPTIONS = [
   { id: 'system', label: 'Sistema' },
@@ -79,6 +80,18 @@ function draw(body, { rerender }) {
         </button>
       </div>
     </div>
+
+    <div class="section">
+      <div class="section__title"><span class="text-headline">Conta local</span></div>
+      <div class="card">
+        <div class="text-footnote text-secondary" style="margin-bottom:14px">Seus dados ficam salvos automaticamente neste aparelho, isolados do perfil de qualquer outra pessoa que use o mesmo navegador.</div>
+        <button class="menu-row" id="switch-profile" style="width:100%;text-align:left">
+          <span class="menu-row__icon">${icon('user', { size: 18 })}</span>
+          <span class="menu-row__label">Trocar de perfil</span>
+          <span class="menu-row__chevron">${icon('chevronRight', { size: 16 })}</span>
+        </button>
+      </div>
+    </div>
   `;
 
   const hoursInput = body.querySelector('#hours');
@@ -139,5 +152,10 @@ function draw(body, { rerender }) {
         sheetBody.querySelector('#cancel-reset').addEventListener('click', () => sheetClose());
       },
     });
+  });
+
+  body.querySelector('#switch-profile').addEventListener('click', () => {
+    clearActiveProfile();
+    location.reload();
   });
 }

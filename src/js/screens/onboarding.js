@@ -1,6 +1,7 @@
 import { icon } from '../icons.js';
 import { store } from '../store/store.js';
 import { toDateKey, addDays } from '../utils/format.js';
+import { listProfiles, getActiveProfileId } from '../store/profiles.js';
 
 const STEPS = 3;
 
@@ -9,8 +10,10 @@ export function runOnboarding(onDone) {
   document.getElementById('tab-bar').style.display = 'none';
   document.getElementById('fab').style.display = 'none';
 
+  const activeProfile = listProfiles().find((p) => p.id === getActiveProfileId());
+
   const data = {
-    name: '',
+    name: activeProfile?.name || '',
     examDate: toDateKey(addDays(new Date(), 120)),
     dailyHours: 2,
   };
