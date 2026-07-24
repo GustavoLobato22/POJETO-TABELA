@@ -45,6 +45,7 @@
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
   transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast);
+  flex-shrink: 0;
 }
 .icon-btn:active { transform: scale(0.92); }
 
@@ -75,6 +76,7 @@
   gap: 4px;
   color: var(--color-text-tertiary);
   transition: color var(--duration-fast) var(--ease-standard), transform var(--duration-fast);
+  position: relative;
 }
 
 .tab-bar__item svg { width: 24px; height: 24px; transition: transform var(--duration-fast) var(--ease-standard); }
@@ -87,6 +89,17 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.01em;
+}
+
+.tab-bar__dot {
+  position: absolute;
+  top: 2px;
+  right: calc(50% - 16px);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-negative);
+  border: 2px solid var(--color-surface);
 }
 
 /* ---- Floating action button ---- */
@@ -168,7 +181,7 @@
   overflow-y: auto;
 }
 
-/* Full screen page (pushed over the tab bar, e.g. Goals detail) */
+/* Full screen page (pushed over the tab bar) */
 .page-overlay {
   position: fixed;
   inset: 0;
@@ -182,6 +195,8 @@
   overflow-y: auto;
 }
 @keyframes page-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+
+.page-overlay.is-fullscreen { z-index: 90; }
 
 .page-overlay .screen-header { padding: calc(var(--safe-top) + var(--space-16)) var(--space-20) 0; }
 .page-overlay .screen-body { padding: 0 var(--space-20) var(--space-32); }
@@ -206,6 +221,7 @@
   gap: var(--space-8);
   animation: toast-in var(--duration-slow) var(--ease-standard) forwards;
   white-space: nowrap;
+  max-width: calc(100% - 40px);
 }
 @keyframes toast-in { to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 .toast.is-leaving { animation: toast-out var(--duration-base) var(--ease-standard) forwards; }

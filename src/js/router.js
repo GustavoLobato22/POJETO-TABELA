@@ -1,18 +1,19 @@
 import { icon } from './icons.js';
 import { store } from './store/store.js';
 import { renderDashboard } from './screens/dashboard.js';
-import { renderCalendar } from './screens/calendar.js';
-import { renderHistory } from './screens/history.js';
-import { renderReports } from './screens/reports.js';
+import { renderQuestionBank } from './screens/questionBank.js';
+import { renderSimuladoSetup } from './screens/simuladoSetup.js';
+import { renderFlashcards } from './screens/flashcards.js';
 import { renderProfile } from './screens/profile.js';
-import { openAddTransactionSheet } from './screens/addTransaction.js';
+import { openPracticeSession } from './screens/practice.js';
+import { dueQuestionReviews, dueFlashcardsReviewOnly } from './store/selectors.js';
 
 export const TABS = [
-  { id: 'dashboard', label: 'Início', icon: 'home', render: renderDashboard, showFab: true },
-  { id: 'calendar', label: 'Calendário', icon: 'calendar', render: renderCalendar, showFab: true },
-  { id: 'history', label: 'Histórico', icon: 'list', render: renderHistory, showFab: true },
-  { id: 'reports', label: 'Relatórios', icon: 'chart', render: renderReports, showFab: false },
-  { id: 'profile', label: 'Perfil', icon: 'user', render: renderProfile, showFab: false },
+  { id: 'dashboard', label: 'Início', icon: 'home', render: renderDashboard },
+  { id: 'questoes', label: 'Questões', icon: 'book', render: renderQuestionBank },
+  { id: 'simulado', label: 'Simulado', icon: 'clipboardList', render: renderSimuladoSetup },
+  { id: 'flashcards', label: 'Revisão', icon: 'layers', render: renderFlashcards },
+  { id: 'perfil', label: 'Perfil', icon: 'user', render: renderProfile },
 ];
 
 let currentTabId = 'dashboard';
@@ -28,10 +29,12 @@ export function navigateTab(id) {
 
 function renderTabBar() {
   const tabBar = document.getElementById('tab-bar');
+  const hasPending = dueQuestionReviews(store.state).length + dueFlashcardsReviewOnly(store.state).length > 0;
   tabBar.innerHTML = TABS.map(
     (t) => `
     <button class="tab-bar__item ${t.id === currentTabId ? 'is-active' : ''}" data-tab="${t.id}">
-      ${icon(t.icon, { size: 23 })}
+      ${icon(t.icon, { size: 22 })}
+      ${t.id === 'flashcards' && hasPending ? '<span class="tab-bar__dot"></span>' : ''}
       <span class="tab-bar__label">${t.label}</span>
     </button>
   `
@@ -43,9 +46,8 @@ function renderTabBar() {
 
 function renderFab() {
   const fab = document.getElementById('fab');
-  const tab = TABS.find((t) => t.id === currentTabId);
-  fab.style.display = tab?.showFab ? 'flex' : 'none';
-  fab.innerHTML = icon('plus', { size: 26 });
+  fab.style.display = 'flex';
+  fab.innerHTML = icon('play', { size: 24 });
 }
 
 function renderScreen() {
@@ -73,10 +75,10 @@ export function initRouter() {
     renderAll();
   });
 
-  document.getElementById('fab').addEventListener('click', () => openAddTransactionSheet());
+  document.getElementById('fab').addEventListener('click', () => openPracticeSession({ mode: 'quick' }));
 
   store.subscribe(() => {
-    renderFab();
+    renderTabBar();
     renderScreen();
   });
 }

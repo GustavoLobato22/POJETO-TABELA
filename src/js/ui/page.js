@@ -1,18 +1,18 @@
 import { icon } from '../icons.js';
 import { pushOverlay, requestCloseTop } from './overlayStack.js';
 
-export function openPage({ title, render, onClose, headerAction }) {
+export function openPage({ title, render, onClose, headerAction, fullscreen = false }) {
   const root = document.getElementById('overlay-root');
 
   const page = document.createElement('div');
-  page.className = 'page-overlay';
+  page.className = 'page-overlay' + (fullscreen ? ' is-fullscreen' : '');
 
   const header = document.createElement('div');
   header.className = 'screen-header';
   header.innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px;min-width:0">
       <button class="icon-btn" data-back aria-label="Voltar">${icon('chevronLeft', { size: 20 })}</button>
-      <div class="text-headline">${title}</div>
+      <div class="text-headline" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title}</div>
     </div>
     <div data-header-action></div>
   `;

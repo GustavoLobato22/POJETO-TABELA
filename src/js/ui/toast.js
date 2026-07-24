@@ -15,5 +15,5 @@ export function showToast(message, { iconName = 'check' } = {}) {
   hideTimer = setTimeout(() => {
     el.classList.add('is-leaving');
     setTimeout(() => el.remove(), 220);
-  }, 2200);
+  }, 2400);
 }

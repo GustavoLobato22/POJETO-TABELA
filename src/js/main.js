@@ -1,11 +1,12 @@
 import { initTheme } from './theme.js';
 import { initRouter } from './router.js';
-import { isAppLocked, showLockScreen } from './screens/lock.js';
+import { store } from './store/store.js';
+import { runOnboarding } from './screens/onboarding.js';
 
 initTheme();
 
-if (isAppLocked()) {
-  showLockScreen(initRouter);
+if (!store.state.profile.onboarded) {
+  runOnboarding(() => initRouter());
 } else {
   initRouter();
 }

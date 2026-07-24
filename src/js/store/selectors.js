@@ -1,78 +1,92 @@
-import { fromDateKey } from '../utils/format.js';
+import { toDateKey } from '../utils/format.js';
+import { getSubject, getTopic } from '../data/subjects.js';
+import { FLASHCARDS } from '../data/flashcards.js';
+import { MISSION_TEMPLATES, missionsForDate } from '../data/missions.js';
+import { isDue, reviewBucketLabel } from '../engine/srs.js';
 
-export function inMonth(tx, year, month) {
-  const d = fromDateKey(tx.date);
-  return d.getFullYear() === year && d.getMonth() === month;
+export function dueQuestionReviews(state) {
+  const today = toDateKey(new Date());
+  return Object.entries(state.reviewQueue)
+    .filter(([, r]) => r.dueDate && r.dueDate <= today)
+    .map(([questionId, r]) => ({
+      questionId,
+      subject: r.subject,
+      topic: r.topic,
+      subjectLabel: getSubject(r.subject)?.short,
+      topicLabel: getTopic(r.subject, r.topic)?.label,
+      stage: r.stage,
+      dueDate: r.dueDate,
+      bucket: reviewBucketLabel(r.dueDate),
+    }));
 }
 
-export function monthTransactions(transactions, year, month) {
-  return transactions.filter((t) => inMonth(t, year, month));
+export function upcomingQuestionReviews(state) {
+  const today = toDateKey(new Date());
+  return Object.entries(state.reviewQueue)
+    .filter(([, r]) => r.dueDate && r.dueDate > today)
+    .map(([questionId, r]) => ({
+      questionId,
+      subject: r.subject,
+      topic: r.topic,
+      dueDate: r.dueDate,
+      bucket: reviewBucketLabel(r.dueDate),
+    }));
 }
 
-export function sumByType(transactions, type) {
-  return transactions.filter((t) => t.type === type).reduce((acc, t) => acc + t.amount, 0);
-}
-
-export function monthSummary(transactions, date = new Date()) {
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const txs = monthTransactions(transactions, year, month);
-  const income = sumByType(txs, 'income');
-  const expense = sumByType(txs, 'expense');
-  return { income, expense, savings: income - expense, count: txs.length };
-}
-
-export function totalBalance(transactions) {
-  return transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
-}
-
-export function percentChange(current, previous) {
-  if (previous === 0) return current === 0 ? 0 : 100;
-  return ((current - previous) / Math.abs(previous)) * 100;
-}
-
-export function last6MonthsSeries(transactions, refDate = new Date()) {
-  const out = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(refDate.getFullYear(), refDate.getMonth() - i, 1);
-    const s = monthSummary(transactions, d);
-    out.push({ year: d.getFullYear(), month: d.getMonth(), ...s });
-  }
-  return out;
-}
-
-export function categoryBreakdown(transactions, type = 'expense') {
-  const map = new Map();
-  transactions.filter((t) => t.type === type).forEach((t) => {
-    map.set(t.category, (map.get(t.category) || 0) + t.amount);
+export function dueFlashcards(state) {
+  return FLASHCARDS.filter((c) => {
+    const s = state.flashcardState[c.id];
+    if (!s) return true; // never studied = available to learn now
+    return isDue(s.dueDate);
   });
-  return [...map.entries()]
-    .map(([category, total]) => ({ category, total }))
-    .sort((a, b) => b.total - a.total);
 }
 
-export function groupByDay(transactions) {
-  const map = new Map();
-  transactions.forEach((t) => {
-    if (!map.has(t.date)) map.set(t.date, []);
-    map.get(t.date).push(t);
+// Only cards the student has already studied before and that came back due —
+// used for "pending review" urgency indicators, so a brand-new deck full of
+// never-seen cards doesn't look like a backlog of forgotten content.
+export function dueFlashcardsReviewOnly(state) {
+  return FLASHCARDS.filter((c) => {
+    const s = state.flashcardState[c.id];
+    return s && isDue(s.dueDate);
   });
-  return map;
 }
 
-export function dailyTotals(dayTransactions) {
-  const income = sumByType(dayTransactions, 'income');
-  const expense = sumByType(dayTransactions, 'expense');
-  return { income, expense, balance: income - expense };
+export function flashcardDeckProgress(state) {
+  const total = FLASHCARDS.length;
+  const studied = FLASHCARDS.filter((c) => state.flashcardState[c.id]).length;
+  const due = dueFlashcards(state).length;
+  return { total, studied, due, new: total - studied };
 }
 
-export function averageDaily(transactions, type, days) {
-  const total = sumByType(transactions, type);
-  return days > 0 ? total / days : 0;
+function attemptsToday(state) {
+  const today = toDateKey(new Date());
+  return state.attempts.filter((a) => a.date === today);
 }
 
-export function biggest(transactions, type) {
-  const filtered = transactions.filter((t) => t.type === type);
-  if (!filtered.length) return null;
-  return filtered.reduce((max, t) => (t.amount > max.amount ? t : max), filtered[0]);
+export function missionsProgressToday(state) {
+  const today = toDateKey(new Date());
+  const todaysAttempts = attemptsToday(state);
+  const answeredToday = todaysAttempts.length;
+  const correctToday = todaysAttempts.filter((a) => a.correct).length;
+  const accuracyToday = answeredToday > 0 ? Math.round((correctToday / answeredToday) * 100) : 0;
+  const flashcardsToday = Object.values(state.flashcardState).filter((s) => s.lastReviewed === today).length;
+  const focusMinutesToday = Math.round(
+    (state.focusSessions.filter((f) => f.date === today).reduce((acc, f) => acc + f.seconds, 0)) / 60,
+  );
+  const studyMinutesToday = focusMinutesToday + Math.round(todaysAttempts.reduce((acc, a) => acc + (a.timeSeconds || 0), 0) / 60);
+  const simuladosToday = state.simulados.filter((s) => toDateKey(new Date(s.createdAt)) === today).length;
+  const subjectsToday = new Set(todaysAttempts.map((a) => a.subject)).size;
+
+  const metrics = { answeredToday, accuracyToday, flashcardsToday, focusMinutesToday, studyMinutesToday, simuladosToday, subjectsToday };
+
+  const missions = missionsForDate(today, 3).map((m) => {
+    const value = metrics[m.metric] || 0;
+    const eligible = !m.minAttempts || answeredToday >= m.minAttempts;
+    const done = eligible && value >= m.target;
+    return { ...m, value, done, progressPct: Math.min(100, Math.round((value / m.target) * 100)) };
+  });
+
+  return { metrics, missions };
 }
+
+export { MISSION_TEMPLATES };

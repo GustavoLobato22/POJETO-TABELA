@@ -1,28 +1,3 @@
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-});
-
-const numberFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
-
-export function formatCurrency(value) {
-  const v = Number(value) || 0;
-  return currencyFormatter.format(v);
-}
-
-export function formatCurrencyCompact(value) {
-  const v = Number(value) || 0;
-  const abs = Math.abs(v);
-  if (abs >= 1_000_000) return (v / 1_000_000).toFixed(1).replace('.', ',') + 'M';
-  if (abs >= 1_000) return (v / 1_000).toFixed(1).replace('.', ',') + 'k';
-  return numberFormatter.format(v);
-}
-
-export function formatSignedCurrency(value, kind) {
-  const sign = kind === 'income' ? '+' : kind === 'expense' ? '−' : value < 0 ? '−' : '+';
-  return `${sign} ${formatCurrency(Math.abs(value))}`;
-}
-
 const WEEKDAYS_SHORT = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 const MONTHS_FULL = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -45,6 +20,21 @@ export function fromDateKey(key) {
 
 export function isSameDay(a, b) {
   return toDateKey(a) === toDateKey(b);
+}
+
+export function addDays(date, n) {
+  const d = date instanceof Date ? date : fromDateKey(date);
+  const copy = new Date(d);
+  copy.setDate(copy.getDate() + n);
+  return copy;
+}
+
+export function daysBetween(a, b) {
+  const da = a instanceof Date ? a : fromDateKey(a);
+  const db = b instanceof Date ? b : fromDateKey(b);
+  const ms = new Date(db.getFullYear(), db.getMonth(), db.getDate()) -
+    new Date(da.getFullYear(), da.getMonth(), da.getDate());
+  return Math.round(ms / 86400000);
 }
 
 export function formatDateLong(date) {
@@ -73,24 +63,41 @@ export function monthLabelShort(monthIndex) {
 
 export function relativeDayLabel(dateKey) {
   const today = toDateKey(new Date());
-  const yesterday = toDateKey(new Date(Date.now() - 86400000));
+  const yesterday = toDateKey(addDays(new Date(), -1));
+  const tomorrow = toDateKey(addDays(new Date(), 1));
   if (dateKey === today) return 'Hoje';
   if (dateKey === yesterday) return 'Ontem';
-  return formatDateLong(dateKey);
+  if (dateKey === tomorrow) return 'Amanhã';
+  return formatDateShort(dateKey);
 }
 
-export function daysInMonth(year, month) {
-  return new Date(year, month + 1, 0).getDate();
+export function formatDuration(seconds) {
+  const s = Math.max(0, Math.round(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}min`;
+  if (m > 0) return `${m}min ${String(sec).padStart(2, '0')}s`;
+  return `${sec}s`;
 }
 
-export function startOfMonth(date) {
-  const d = date instanceof Date ? date : new Date(date);
-  return new Date(d.getFullYear(), d.getMonth(), 1);
+export function formatClock(seconds) {
+  const s = Math.max(0, Math.round(seconds));
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-export function addMonths(date, n) {
-  const d = date instanceof Date ? date : new Date(date);
-  return new Date(d.getFullYear(), d.getMonth() + n, 1);
+export function formatPercent(value, digits = 0) {
+  return `${(Number(value) || 0).toFixed(digits)}%`;
+}
+
+export function formatHours(hoursDecimal) {
+  const h = Math.floor(hoursDecimal);
+  const m = Math.round((hoursDecimal - h) * 60);
+  if (h <= 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}min`;
 }
 
 export { MONTHS_FULL, MONTHS_SHORT, WEEKDAYS_SHORT };

@@ -1,16 +1,16 @@
 /* ==========================================================================
-   Design tokens — Finanças (financial control app)
+   Design tokens — PMES Estudos (plataforma de preparação PMES)
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
   /* ---- Brand ---- */
-  --color-brand: #16A34A;
-  --color-brand-strong: #0F7C38;
-  --color-brand-soft: #E7F6ED;
-  --color-accent: #3B6FCC;
-  --color-accent-soft: #EAF0FC;
+  --color-brand: #1C3F72;
+  --color-brand-strong: #122A50;
+  --color-brand-soft: #E8EEF8;
+  --color-accent: #B9832A;
+  --color-accent-soft: #FAF0DC;
 
   /* ---- Semantic ---- */
   --color-positive: #16A34A;
@@ -20,19 +20,25 @@
   --color-warning: #D97706;
   --color-warning-soft: #FDF3E3;
 
+  /* ---- Mastery (heatmap) ---- */
+  --color-mastery-high: #16A34A;
+  --color-mastery-mid: #D97706;
+  --color-mastery-low: #DC2626;
+  --color-mastery-none: #C7CCD6;
+
   /* ---- Surfaces ---- */
-  --color-bg: #F7F8FA;
+  --color-bg: #F5F6F9;
   --color-surface: #FFFFFF;
   --color-surface-raised: #FFFFFF;
-  --color-surface-sunken: #F2F3F5;
-  --color-border: #EBECEF;
-  --color-border-strong: #DCDFE4;
-  --color-overlay: rgba(17, 20, 24, 0.44);
+  --color-surface-sunken: #EEF0F4;
+  --color-border: #E7E9EF;
+  --color-border-strong: #D8DCE4;
+  --color-overlay: rgba(10, 14, 24, 0.46);
 
   /* ---- Text ---- */
-  --color-text-primary: #12141A;
-  --color-text-secondary: #62666F;
-  --color-text-tertiary: #9096A2;
+  --color-text-primary: #10141C;
+  --color-text-secondary: #5B6270;
+  --color-text-tertiary: #8D93A1;
   --color-text-inverse: #FFFFFF;
   --color-text-on-brand: #FFFFFF;
 
@@ -76,7 +82,7 @@
   --shadow-1: 0 1px 2px rgba(16, 20, 30, 0.05);
   --shadow-2: 0 2px 8px rgba(16, 20, 30, 0.06), 0 1px 2px rgba(16, 20, 30, 0.04);
   --shadow-3: 0 8px 24px rgba(16, 20, 30, 0.08), 0 2px 6px rgba(16, 20, 30, 0.05);
-  --shadow-fab: 0 10px 24px rgba(22, 163, 74, 0.30);
+  --shadow-fab: 0 10px 24px rgba(28, 63, 114, 0.30);
 
   /* ---- Motion ---- */
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
@@ -94,11 +100,11 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --color-brand: #22C55E;
-  --color-brand-strong: #4ADE80;
-  --color-brand-soft: rgba(34, 197, 94, 0.14);
-  --color-accent: #6D93E0;
-  --color-accent-soft: rgba(109, 147, 224, 0.14);
+  --color-brand: #6E9BDB;
+  --color-brand-strong: #93B7EA;
+  --color-brand-soft: rgba(110, 155, 219, 0.16);
+  --color-accent: #E0AC50;
+  --color-accent-soft: rgba(224, 172, 80, 0.16);
 
   --color-positive: #22C55E;
   --color-positive-soft: rgba(34, 197, 94, 0.14);
@@ -107,35 +113,40 @@
   --color-warning: #E5A64B;
   --color-warning-soft: rgba(229, 166, 75, 0.14);
 
-  --color-bg: #0C0D10;
-  --color-surface: #16181D;
-  --color-surface-raised: #1C1F26;
-  --color-surface-sunken: #101216;
-  --color-border: #23262D;
-  --color-border-strong: #2E323B;
-  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-mastery-high: #22C55E;
+  --color-mastery-mid: #E5A64B;
+  --color-mastery-low: #F16363;
+  --color-mastery-none: #3A3F4B;
 
-  --color-text-primary: #F4F5F7;
-  --color-text-secondary: #9BA0AC;
-  --color-text-tertiary: #6B7080;
-  --color-text-inverse: #12141A;
-  --color-text-on-brand: #08210F;
+  --color-bg: #0A0C11;
+  --color-surface: #14171F;
+  --color-surface-raised: #1B1F29;
+  --color-surface-sunken: #0F1218;
+  --color-border: #212530;
+  --color-border-strong: #2C303C;
+  --color-overlay: rgba(0, 0, 0, 0.62);
+
+  --color-text-primary: #F4F5F8;
+  --color-text-secondary: #9AA0AF;
+  --color-text-tertiary: #666C7A;
+  --color-text-inverse: #10141C;
+  --color-text-on-brand: #0A162A;
 
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-2: 0 2px 10px rgba(0, 0, 0, 0.35);
   --shadow-3: 0 10px 28px rgba(0, 0, 0, 0.45);
-  --shadow-fab: 0 10px 24px rgba(34, 197, 94, 0.28);
+  --shadow-fab: 0 10px 24px rgba(110, 155, 219, 0.26);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --color-brand: #22C55E;
-    --color-brand-strong: #4ADE80;
-    --color-brand-soft: rgba(34, 197, 94, 0.14);
-    --color-accent: #6D93E0;
-    --color-accent-soft: rgba(109, 147, 224, 0.14);
+    --color-brand: #6E9BDB;
+    --color-brand-strong: #93B7EA;
+    --color-brand-soft: rgba(110, 155, 219, 0.16);
+    --color-accent: #E0AC50;
+    --color-accent-soft: rgba(224, 172, 80, 0.16);
 
     --color-positive: #22C55E;
     --color-positive-soft: rgba(34, 197, 94, 0.14);
@@ -144,23 +155,28 @@
     --color-warning: #E5A64B;
     --color-warning-soft: rgba(229, 166, 75, 0.14);
 
-    --color-bg: #0C0D10;
-    --color-surface: #16181D;
-    --color-surface-raised: #1C1F26;
-    --color-surface-sunken: #101216;
-    --color-border: #23262D;
-    --color-border-strong: #2E323B;
-    --color-overlay: rgba(0, 0, 0, 0.6);
+    --color-mastery-high: #22C55E;
+    --color-mastery-mid: #E5A64B;
+    --color-mastery-low: #F16363;
+    --color-mastery-none: #3A3F4B;
 
-    --color-text-primary: #F4F5F7;
-    --color-text-secondary: #9BA0AC;
-    --color-text-tertiary: #6B7080;
-    --color-text-inverse: #12141A;
-    --color-text-on-brand: #08210F;
+    --color-bg: #0A0C11;
+    --color-surface: #14171F;
+    --color-surface-raised: #1B1F29;
+    --color-surface-sunken: #0F1218;
+    --color-border: #212530;
+    --color-border-strong: #2C303C;
+    --color-overlay: rgba(0, 0, 0, 0.62);
+
+    --color-text-primary: #F4F5F8;
+    --color-text-secondary: #9AA0AF;
+    --color-text-tertiary: #666C7A;
+    --color-text-inverse: #10141C;
+    --color-text-on-brand: #0A162A;
 
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-2: 0 2px 10px rgba(0, 0, 0, 0.35);
     --shadow-3: 0 10px 28px rgba(0, 0, 0, 0.45);
-    --shadow-fab: 0 10px 24px rgba(34, 197, 94, 0.28);
+    --shadow-fab: 0 10px 24px rgba(110, 155, 219, 0.26);
   }
 }
